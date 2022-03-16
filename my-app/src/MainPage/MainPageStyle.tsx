@@ -9,6 +9,5 @@ export const MainPageWrapper = styled.div`
     background-color: #666666;
     .contenet-wrapper{
         margin: 30px 10px 10px;
-        background-color: red;
     }
 `;
