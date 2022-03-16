@@ -7,4 +7,8 @@ export const MainPageWrapper = styled.div`
     padding: 0;
     box-sizing: border-box;
     background-color: #666666;
+    .contenet-wrapper{
+        margin: 30px 10px 10px;
+        background-color: red;
+    }
 `;
