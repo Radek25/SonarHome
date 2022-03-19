@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/SonarHome/static/js/main.623e80e9.js",
+    "index.html": "/SonarHome/index.html",
+    "main.623e80e9.js.map": "/SonarHome/static/js/main.623e80e9.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.623e80e9.js"
+  ]
+}
