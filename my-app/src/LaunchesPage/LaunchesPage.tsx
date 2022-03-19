@@ -1,6 +1,7 @@
 import { useQuery, gql } from "@apollo/client";
 import { LaunchesWrapper } from './LaunchesPageStyle';
 import { useState } from 'react';
+import { ILaunch, IData } from "../Interfaces/Interfaces";
 
 //Create GraphQL template tag
 const GET_LAUNCHES = gql`
@@ -12,21 +13,13 @@ const GET_LAUNCHES = gql`
     }
 `;
 
-interface ILaunch {
-    id: string,
-    mission_name: string,
-    __typename: string
-}
-interface IData {
-    launchesPast: ILaunch[]
-}
-
 export const LaunchesPage: React.FunctionComponent<{}> = () => {
     const { data, loading, error, fetchMore } = useQuery(GET_LAUNCHES, { variables: { offset: 0 } });
     const [isDataLoading, setDataLoading] = useState(false);
     const [noMoreData, setEndOfData] = useState(false);
     const fatchDataOffset = 200;
 
+    //Function to check scroll position and fetch new data if it's needed
     const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
         if (isDataLoading) return;
         if (e.currentTarget.scrollTop + e.currentTarget.clientHeight >= e.currentTarget.scrollHeight - fatchDataOffset) {
@@ -45,15 +38,15 @@ export const LaunchesPage: React.FunctionComponent<{}> = () => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <pre>{error.message}</pre>
+    if (loading) return <LaunchesWrapper><div className="loading-div">Loading...</div></LaunchesWrapper>;
+    if (error) return <LaunchesWrapper><div>{error.message}</div></LaunchesWrapper>
 
     return (
         <LaunchesWrapper>
             <input type='text' placeholder='Find your racket...' />
             <ul onScroll={handleScroll}>
                 {data.launchesPast.map((launch: ILaunch) => <li key={launch.mission_name}>&#128640; {launch.mission_name}</li>)}
-                {isDataLoading && !noMoreData ?  <li>lodaing more data...</li>:  <li>No more data!</li>}
+                {isDataLoading && !noMoreData ?  <li className="loading-on-list">&#128513; Loading more data... &#128513;</li>:  <li className="loading-on-list">&#128532; No more data &#128532;</li>}
             </ul>
         </LaunchesWrapper>
     );
