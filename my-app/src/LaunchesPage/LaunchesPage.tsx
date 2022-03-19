@@ -1,52 +1,55 @@
 import { useQuery, gql } from "@apollo/client";
-
 import { LaunchesWrapper } from './LaunchesPageStyle';
 import { useState } from 'react';
 
+//Create GraphQL template tag
 const GET_LAUNCHES = gql`
-    query GetLaunches($limit: Int, $offset: Int, $order: String){
-        launchesPast(limit: $limit, offset: $offset, order: $order){
+    query GetLaunches($offset: Int){
+        launches(limit: 10, offset: $offset){
             id
             mission_name
         }
     }
 `;
 
-export const LaunchesPage : any  = () => {
-    let offset: number = 10;
-    // const [dataArray, setDataArray] = useState[undefined]; - to zastosować!
-    const dataArray: { id: number, mission_name: string }[] = [];
-    const [loadDataFlag, setLoadDataFlag] = useState(false);
+interface ILaunch {
+    id: string,
+    mission_name: string,
+    __typename: string
+}
+interface IData {
+    launches: ILaunch[]
+}
 
-    const {  data, loading, error, fetchMore } = useQuery(GET_LAUNCHES, {variables: {limit: 10, offset: 0, order: null}});
-    
-    if (loading) return "Loading...";
-    if (error) return <pre>{error.message}</pre>
-    dataArray.push(...data.launchesPast);
-    
+export const LaunchesPage: React.FunctionComponent<{}> = () => {
+    const { data, loading, error, fetchMore } = useQuery(GET_LAUNCHES, { variables: { offset: 0 } });
+    const [isDataLoading, setDataLoading] = useState(false);
+    const fatchDataOffset = 200;
     const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
-       if((e.currentTarget.scrollTop === (e.currentTarget.clientHeight-33)) && loadDataFlag === false){
-            setLoadDataFlag(!loadDataFlag);
-            console.log("Ładuje nowe dane");
-       }
+        if (isDataLoading) return;
+        if (e.currentTarget.scrollTop + e.currentTarget.clientHeight >= e.currentTarget.scrollHeight - fatchDataOffset) {
+            setDataLoading(true);
+            fetchMore({
+                variables: { offset: data.launches.length },
+                updateQuery: (prevResult: IData, { fetchMoreResult }) => {
+                    setDataLoading(false);
+
+                    return ({ ...data, launches: [...data.launches, ...fetchMoreResult?.launches ?? []] });
+                }
+            })
+        }
     };
 
-    return(
+    if (loading) return <div>Loading...</div>;
+    if (error) return <pre>{error.message}</pre>
+
+    return (
         <LaunchesWrapper>
-            <input type='text' placeholder='Find your racket...'/>
+            <input type='text' placeholder='Find your racket...' />
             <ul onScroll={handleScroll}>
-                {dataArray.map(launch => <li key={launch.id}>&#128640; {launch.mission_name}</li>)}
+                {data.launches.map((launch: ILaunch) => <li key={launch.id}>&#128640; {launch.mission_name}</li>)}
+                {isDataLoading && <li>lodaing more data...</li>}
             </ul>
-            <button onClick={() => {
-                fetchMore({
-                    variables: {limit: 10, offset: offset},
-                    updateQuery : (prevRes, {fetchMoreResult}) => {
-                        dataArray.push(...fetchMoreResult.launchesPast);
-                    }
-                })
-            }
-            }>Dane</button>
-            <button onClick={() => {console.log(dataArray); offset = offset +10}}>GetArr</button>
         </LaunchesWrapper>
     );
 };
