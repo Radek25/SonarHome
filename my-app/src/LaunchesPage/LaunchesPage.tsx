@@ -5,7 +5,7 @@ import { useState } from 'react';
 //Create GraphQL template tag
 const GET_LAUNCHES = gql`
     query GetLaunches($offset: Int){
-        launches(limit: 10, offset: $offset){
+        launchesPast(limit: 10, offset: $offset){
             id
             mission_name
         }
@@ -18,23 +18,28 @@ interface ILaunch {
     __typename: string
 }
 interface IData {
-    launches: ILaunch[]
+    launchesPast: ILaunch[]
 }
 
 export const LaunchesPage: React.FunctionComponent<{}> = () => {
     const { data, loading, error, fetchMore } = useQuery(GET_LAUNCHES, { variables: { offset: 0 } });
     const [isDataLoading, setDataLoading] = useState(false);
+    const [noMoreData, setEndOfData] = useState(false);
     const fatchDataOffset = 200;
+
     const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
         if (isDataLoading) return;
         if (e.currentTarget.scrollTop + e.currentTarget.clientHeight >= e.currentTarget.scrollHeight - fatchDataOffset) {
             setDataLoading(true);
             fetchMore({
-                variables: { offset: data.launches.length },
+                variables: { offset: data.launchesPast.length },
                 updateQuery: (prevResult: IData, { fetchMoreResult }) => {
                     setDataLoading(false);
-
-                    return ({ ...data, launches: [...data.launches, ...fetchMoreResult?.launches ?? []] });
+                    if(!fetchMoreResult){
+                        setEndOfData(true);
+                        return prevResult;
+                    }
+                    return ({ ...data, launchesPast: [...data.launchesPast, ...fetchMoreResult?.launchesPast ?? []] });
                 }
             })
         }
@@ -47,8 +52,8 @@ export const LaunchesPage: React.FunctionComponent<{}> = () => {
         <LaunchesWrapper>
             <input type='text' placeholder='Find your racket...' />
             <ul onScroll={handleScroll}>
-                {data.launches.map((launch: ILaunch) => <li key={launch.id}>&#128640; {launch.mission_name}</li>)}
-                {isDataLoading && <li>lodaing more data...</li>}
+                {data.launchesPast.map((launch: ILaunch) => <li key={launch.mission_name}>&#128640; {launch.mission_name}</li>)}
+                {isDataLoading && !noMoreData ?  <li>lodaing more data...</li>:  <li>No more data!</li>}
             </ul>
         </LaunchesWrapper>
     );
